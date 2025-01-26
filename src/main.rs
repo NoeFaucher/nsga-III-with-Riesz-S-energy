@@ -8,7 +8,6 @@ use problem::{dtzl1::DTZL1, dtzl2::DTZL2, dtzl3::DTZL3, dtzl6::DTZL6, dtzl7::DTZ
 
 
 
-
 fn main() {
     // let mut nsga = Nsga3::new();
     // nsga.iterate();
