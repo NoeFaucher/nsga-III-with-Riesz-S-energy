@@ -1,11 +1,11 @@
-use std::{f64::consts::PI, vec};
+use std::f64::consts::PI;
 
 use rand::Rng;
 
 use super::Problem;
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DTZL7 {
     dim_point: usize,
     dim_objective: usize,

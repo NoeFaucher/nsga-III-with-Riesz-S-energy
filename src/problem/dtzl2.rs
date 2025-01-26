@@ -6,7 +6,7 @@ use rand::Rng;
 use super::Problem;
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DTZL2 {
     dim_point: usize,
     dim_objective: usize,

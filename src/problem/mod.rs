@@ -15,9 +15,9 @@ pub trait Problem {
     fn is_coord_allow(&self,coord: &Vec<f64>) -> bool;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Point<T> 
-where T: Problem
+where T: Problem + Clone
 {
     pub coord: Vec<f64>,
     pub fitness: Vec<f64>,
@@ -27,7 +27,7 @@ where T: Problem
 
 
 impl<T> Point<T>
-where T: Problem
+where T: Problem + Clone
 {
     pub fn new(problem: Rc<RefCell<T>>) -> Self {
         let coord = problem.borrow().generate_random_coord();
