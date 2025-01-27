@@ -21,6 +21,7 @@ where T: Problem + Clone
 {
     pub coord: Vec<f64>,
     pub fitness: Vec<f64>,
+    pub norm_fitness: Vec<f64>,
 
     problem: Rc<RefCell<T>>
 }
@@ -36,6 +37,7 @@ where T: Problem + Clone
         Self {
             coord,
             fitness,
+            norm_fitness: vec![],
             problem,
         }
     }
@@ -52,6 +54,7 @@ where T: Problem + Clone
         Self {
             coord,
             fitness,
+            norm_fitness: vec![],
             problem,
         }
 

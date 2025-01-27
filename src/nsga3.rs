@@ -17,12 +17,12 @@ where T: Problem + Clone
 impl<T> Nsga3<T>
 where T: Problem + Clone
 {
-    fn new() -> Nsga3<T> {
+    pub fn new() -> Nsga3<T> {
         Nsga3 {
             parent_pop: LinkedList::new(),
             ref_points: Vec::new(),
             pop_size: 100,
-            ideal_point: Vec::new()
+            ideal_point: vec![0.; 5]
         }
     }
 
@@ -67,12 +67,13 @@ where T: Problem + Clone
         todo!()
     }
 
-    fn normalise(&mut self, saturated: &mut LinkedList<Point<T>>) {
+    pub fn normalise(&mut self, saturated: &mut LinkedList<Point<T>>) {
         let mut extreme_points: Vec<Point<T>> = Vec::new();
         let mut min_abs: Vec<f64> = Vec::new();
         let mut nb_obj: usize = 0;
 
         for ele in saturated.clone().iter() {
+            println!("{:?}", ele.fitness);
             let ele_fitness: Vec<f64> = ele.fitness.clone();
             let mut w: Vec<f64> = vec![];
 
@@ -116,26 +117,26 @@ where T: Problem + Clone
         let mut b = DMatrix::<f64>::from_element(n, 1, 0.0);
 
         for (i, point) in extreme_points.iter().enumerate() {
+            println!("{:?}", point.fitness);
             for j in 0..n {
                 a[(i, j)] = point.fitness[j];
             }
-            b[i] = 1.0;
+            b[(i, 0)] = 1.0;
         }
-
+        println!("{:?}", a.determinant());
+        println!("{:?}", a);
         let coefficients = a.lu().solve(&b).unwrap();
         let mut a_list: Vec<f64> = vec![];
 
         for j in 0..nb_obj {
-            a_list.push(-1./coefficients[(1, j)]);
+            a_list.push(b[(j, 0)]/(coefficients[(j, 0)]));
         }
         
 
         // Normalise the fitness of every point
         for ele in saturated.iter_mut() {
             for j in 0..nb_obj {
-                // ele.set_norm_fitness((ele.fitness[j] - self.ideal_point[j]) / (a_list[j] - self.ideal_point[j]), j);
-
-                // on a besoin de la fitness normale apres ou on peut consider que la fitness normaliser c'est la nouvelle fitness ??
+                ele.norm_fitness.push((ele.fitness[j] - self.ideal_point[j]) / (a_list[j] - self.ideal_point[j]));
             }
         }
     }
