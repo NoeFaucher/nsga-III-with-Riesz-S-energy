@@ -6,6 +6,11 @@ pub(crate) mod dtzl3;
 pub(crate) mod dtzl6;
 pub(crate) mod dtzl7;
 
+pub enum Domination {
+    Dominates,
+    Equivalent,
+    Dominated,
+}
 
 pub trait Problem {
     fn fitness(&self, coord: &Vec<f64>) -> Vec<f64>;
@@ -41,7 +46,6 @@ where T: Problem + Clone
     }
 
     pub fn new_from(coord: Vec<f64>, problem: Rc<RefCell<T>>) -> Self {
-
         // to disable when running
         if !problem.borrow().is_coord_allow(&coord) {
             panic!("Point::new_from : Coord of point not allow may be out of bounds of the dimension may mismatch");
@@ -56,4 +60,44 @@ where T: Problem + Clone
         }
 
     }
+
+    pub fn domination(&self, other: &Self) -> Domination {
+        // self ≺(notation) other  = self dominate other
+
+        // pour dominer il faut que tous les critères soient meilleurs (les values >(maximisation) )
+        if self
+            .fitness
+            .clone()
+            .into_iter()
+            .enumerate()
+            .all(|(i, v)| v >= other.fitness[i]) 
+            && self
+            .fitness
+            .clone()
+            .into_iter()
+            .enumerate()
+            .any(|(i, v)| v > other.fitness[i])
+        {
+            return Domination::Dominates;
+        }
+
+        // pas domine (equivalent)=> au moins un critère soit meilleur (une value > )
+        if self
+            .fitness
+            .clone()
+            .into_iter()
+            .enumerate()
+            .all(|(i, v)| v <= other.fitness[i]) && self
+            .fitness
+            .clone()
+            .into_iter()
+            .enumerate()
+            .any(|(i, v)| v < other.fitness[i])
+        {
+            return Domination::Dominated;
+        }
+
+        return Domination::Equivalent;
+    }
+
 }

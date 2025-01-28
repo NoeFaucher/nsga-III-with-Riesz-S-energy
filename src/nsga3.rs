@@ -38,7 +38,7 @@ where T: Problem + Clone
         self.get_offspring(&mut everyone);
         everyone.append(&mut self.parent_pop);
 
-        self.non_dominated_sort(&mut fronts, everyone);
+        fronts = non_dominated_sort(everyone);
 
         while saturated.len() < self.pop_size && i < fronts.len() {
             saturated.append(&mut fronts[i]);
@@ -61,10 +61,6 @@ where T: Problem + Clone
 
     fn get_offspring(&self, offspring: &mut LinkedList<Point<T>>) {
         todo!() // crossover + mutation from self.parent_pop
-    }
-
-    fn non_dominated_sort(&self, fronts: &mut Vec<LinkedList<Point<T>>>, pop: LinkedList<Point<T>>) {
-        todo!()
     }
 
     fn normalise(&mut self, saturated: &mut LinkedList<Point<T>>) {
@@ -147,4 +143,68 @@ where T: Problem + Clone
     fn niching(&self) {
         todo!()
     }
+}
+
+
+pub fn non_dominated_sort<T>(pop: LinkedList<Point<T>>) -> Vec<LinkedList<Point<T>>>
+where T: Problem + Clone
+{
+    let mut s: Vec<Vec<Point<T>>>= vec![vec![];pop.len()];
+    let mut s_index: Vec<Vec<usize>>= vec![vec![];pop.len()];
+    let mut f: Vec<LinkedList<Point<T>>> = vec![];
+    let mut f_index: Vec<LinkedList<usize>> = vec![];
+    
+    let mut d_count = vec![0;pop.len()];
+    for (i,p1) in pop.clone().into_iter().enumerate() {
+        for (j,p2) in pop.clone().into_iter().enumerate() {
+            if i == j {
+                continue;
+            }
+            match p1.domination(&p2) {
+                crate::problem::Domination::Dominates => {
+                    s[i].push(p2);
+                    s_index[i].push(j);
+                },
+                crate::problem::Domination::Equivalent => (),
+                crate::problem::Domination::Dominated => {
+                    d_count[i] += 1
+                },
+            }
+        }
+        
+        if d_count[i] == 0 {
+            if f.len() == 0 {
+                f.push(LinkedList::new());
+                f_index.push(LinkedList::new());
+            }
+            f[0].push_back(p1.clone());
+            f_index[0].push_back(i);
+        }
+    }
+    
+    let mut fi = 0;
+    loop {
+        let mut q: LinkedList<Point<T>> = LinkedList::new();
+        let mut q_index: LinkedList<usize> = LinkedList::new();
+
+        for i in f_index[fi].clone().into_iter() {
+            for (p2, j) in s[i].clone().into_iter().zip(s_index[i].clone().into_iter()) {
+                d_count[j] -= 1;
+                if d_count[j] == 0 {
+                    q.push_back(p2);
+                    q_index.push_back(j);
+                }
+            }
+        }
+
+        fi += 1;
+        if q.is_empty() {
+            break;
+        }
+
+        f.push(q.clone());
+        f_index.push(q_index.clone());
+    }
+
+    return f;
 }
