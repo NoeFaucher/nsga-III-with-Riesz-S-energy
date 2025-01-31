@@ -54,7 +54,9 @@ where T: Problem + Clone
             }
 
             self.normalise(&mut saturated);
-            self.associate();
+            let mut associated: Vec<usize> = Vec::new();
+            let mut distances: Vec<f64> = Vec::new();
+            self.associate(&mut associated, &mut distances, &saturated);
             self.niching();
         }
     }
@@ -68,7 +70,7 @@ where T: Problem + Clone
     }
 
     pub fn normalise(&mut self, saturated: &mut LinkedList<Point<T>>) {
-    fn normalise(&mut self, saturated: &mut LinkedList<Point<T>>) {
+        let mut rng = rand::thread_rng();
         let mut extreme_points: Vec<Point<T>> = Vec::new();
         let mut min_abs: Vec<f64> = Vec::new();
         let mut nb_obj: usize = 0;
@@ -121,6 +123,9 @@ where T: Problem + Clone
             println!("{:?}", point.fitness);
             for j in 0..n {
                 a[(i, j)] = point.fitness[j];
+                if i == j {
+                    a[(i, j)] += 0.000001;
+                }
             }
             b[(i, 0)] = 1.0;
         }
@@ -142,8 +147,29 @@ where T: Problem + Clone
         }
     }
 
-    fn associate(&self) {
-        todo!()
+    fn associate(&self, associated: &mut Vec<usize>, distances: &mut Vec<f64>, saturated: &LinkedList<Point<T>>) {
+        for (k, ref_point) in self.ref_points.iter().enumerate() {
+            for (i, point) in saturated.iter().enumerate() {
+                let mut scalar = 0.;
+                let mut norm_sq = 0.;
+                for j in 0..ref_point.len() {
+                    scalar += ref_point[j] * point.fitness[j];
+                    norm_sq += ref_point[j] * ref_point[j];
+                }
+                
+                let mut dist_sq = 0.;
+                for j in 0..ref_point.len() {
+                    dist_sq += point.fitness[j] - scalar / norm_sq * ref_point[j] * point.fitness[j] - scalar / norm_sq * ref_point[j];
+                }
+                if associated.len() < saturated.len() {
+                    associated.push(k);
+                    distances.push(dist_sq);
+                } else if dist_sq < distances[i] {
+                    associated[i] = k;
+                    distances[i] = dist_sq;
+                }
+            }
+        }
     }
 
     fn niching(&self) {

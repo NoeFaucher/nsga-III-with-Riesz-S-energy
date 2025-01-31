@@ -3,7 +3,7 @@ mod problem;
 
 use std::{cell::RefCell, collections::LinkedList, rc::Rc, vec};
 
-use nsga3::Nsga3;
+// use nsga3::Nsga3;
 // use nsga3::Nsga3;
 use problem::{dtzl1::DTZL1, dtzl2::DTZL2, dtzl3::DTZL3, dtzl6::DTZL6, dtzl7::DTZL7, Point};
 use nsga3::{Nsga3, non_dominated_sort};
