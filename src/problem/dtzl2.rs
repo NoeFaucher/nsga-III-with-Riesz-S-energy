@@ -65,5 +65,9 @@ impl Problem for DTZL2 {
     fn is_coord_allow(&self,coord: &Vec<f64>) -> bool {
         return coord.len() == self.dim_point && coord.iter().all(|&v| {v >= 0. && v <= 1.});
     }
+
+    fn get_bounds(&self) -> (f64, f64) {
+        return (0., 1.);
+    }
 }
     

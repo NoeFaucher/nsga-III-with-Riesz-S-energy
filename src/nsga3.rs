@@ -1,7 +1,8 @@
-use std::collections::LinkedList;
+use std::{collections::LinkedList, ptr, rc::Rc};
 use nalgebra::{DMatrix};
+use rand::{seq::{IteratorRandom, SliceRandom}, Rng};
 
-use crate::problem::{Point, Problem};
+use crate::problem::{self, Point, Problem};
 
 const NB_OBJ: usize = 5;
 
@@ -35,7 +36,7 @@ where T: Problem + Clone
         let mut everyone: LinkedList<Point<T>> = LinkedList::new();
         let mut fronts: Vec<LinkedList<Point<T>>> = Vec::new();
 
-        self.get_offspring(&mut everyone);
+        self.get_offspring();
         everyone.append(&mut self.parent_pop);
 
         fronts = non_dominated_sort(everyone);
@@ -59,8 +60,77 @@ where T: Problem + Clone
         }
     }
 
-    fn get_offspring(&self, offspring: &mut LinkedList<Point<T>>) {
-        todo!() // crossover + mutation from self.parent_pop
+    // crossover and mutation from:
+    // Kalyanmoy Deb, Karthik Sindhya, and Tatsuya Okabe. Self-adaptive simulated binary crossover for real-parameter optimization. 
+    // In Proceedings of the 9th Annual Conference on Genetic and Evolutionary Computation, GECCO ‘07, 1187–1194. New York, NY, USA, 2007. ACM.
+    fn get_offspring(&self ) -> LinkedList<Point<T>> {
+        // crossover + mutation from self.parent_pop
+
+        let mut rng = rand::thread_rng();
+
+        let nb_offsprings: usize = 100;
+        
+        // crossover (SBX)
+        let mut offsprings: LinkedList<Point<T>> = LinkedList::new();
+        let parent: Vec<Point<T>> = self.parent_pop.clone().into_iter().collect();
+        let problem = parent[0].get_problem(); 
+        let (lower_b,upper_b) = problem.borrow().get_bounds();
+
+        let eta = 2.; // distribution index
+
+
+        fn calc_betaq(beta: f64, eta: f64, u: f64) -> f64 {
+            let alpha = 2. - beta.powf(-(eta + 1.)) ;
+            let betaq;
+
+            if u <= (1./alpha) {
+                betaq = (u * alpha).powf(1. / (eta + 1.));
+            } else {
+                betaq = (1. / (2. - u * alpha)).powf(1. / (eta + 1.));
+            }
+            return  betaq;
+        }
+
+
+        for _ in 0..nb_offsprings/2 {
+            let parents: Vec<&Point<T>> = parent.choose_multiple(&mut rng,2).collect();
+
+            let coord_size = parents[0].coord.len();
+            let cross: Vec<bool> = (0..coord_size).map(|_| rng.gen_bool(0.3)).collect();
+
+
+            let mut cc1: Vec<f64> = parents[0].coord.clone();
+            let mut cc2: Vec<f64> = parents[1].coord.clone();
+
+            for i in 0..coord_size {
+                let u: f64 = rng.gen_range(0.0..=1.);
+
+                let y1 = parents[0].coord[i].min(parents[1].coord[i]);
+                let y2 = parents[0].coord[i].max(parents[1].coord[i]);
+
+                let delta: f64 = y2 - y1;
+
+                if cross[i] {
+                    let beta: f64 = 1. + (2. * (y1 - lower_b) / delta);
+                    let betaq = calc_betaq(beta, eta, u);
+                    cc1[i] = 0.5 * ( (1. + betaq) * parents[0].coord[i] +  (1. - betaq) * parents[1].coord[i] );
+
+
+                    let beta: f64 = 1. + (2. * (upper_b - y2) / delta);
+                    let betaq = calc_betaq(beta, eta, u);
+                    cc2[i] = 0.5 * ( (1. - betaq) * parents[0].coord[i] +  (1. + betaq) * parents[1].coord[i] );
+                }
+            }
+            
+            let c1: Point<T> = Point::new_from(cc1, Rc::clone(&problem));
+            let c2: Point<T> = Point::new_from(cc2, Rc::clone(&problem));
+            
+            offsprings.push_back(c1);
+            offsprings.push_back(c2);
+        }
+
+
+        return offsprings;
     }
 
     fn normalise(&mut self, saturated: &mut LinkedList<Point<T>>) {
@@ -145,10 +215,12 @@ where T: Problem + Clone
     }
 }
 
-
+// from paper: 
+// Deb K, Pratap A, Agarwal S, Meyarivan T. A fast and elitist multiobjective genetic algorithm: NSGA-IIDeb K, Pratap A, Agarwal S, Meyarivan T. A fast and elitist multiobjective genetic algorithm: NSGA-II[J].
+// Ieee Transactions on Evolutionary Computation. 2002,6(2):182-97
 pub fn non_dominated_sort<T>(pop: LinkedList<Point<T>>) -> Vec<LinkedList<Point<T>>>
 where T: Problem + Clone
-{
+{   
     let mut s: Vec<Vec<Point<T>>>= vec![vec![];pop.len()]; // list of point dominated by the point of the index in the pop
     let mut s_index: Vec<Vec<usize>>= vec![vec![];pop.len()]; // list of index of pointdominated by the point of the index in the pop
     let mut f: Vec<LinkedList<Point<T>>> = vec![];  // list of fronts

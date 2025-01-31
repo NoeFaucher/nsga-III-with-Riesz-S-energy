@@ -18,6 +18,8 @@ pub trait Problem {
     fn generate_random_coord(&self) -> Vec<f64>;
 
     fn is_coord_allow(&self,coord: &Vec<f64>) -> bool;
+
+    fn get_bounds(&self) -> (f64, f64);
 }
 
 #[derive(Debug, Clone)]
@@ -59,6 +61,10 @@ where T: Problem + Clone
             problem,
         }
 
+    }
+
+    pub fn get_problem(&self) -> Rc<RefCell<T>> {
+        return Rc::clone(&self.problem);
     }
 
     pub fn domination(&self, other: &Self) -> Domination {
