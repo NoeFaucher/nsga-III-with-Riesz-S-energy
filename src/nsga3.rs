@@ -1,6 +1,5 @@
 use std::collections::LinkedList;
-use nalgebra::{DMatrix};
-use rand::random;
+use nalgebra::DMatrix;
 
 use crate::problem::{Point, Problem};
 
@@ -227,7 +226,7 @@ where T: Problem + Clone
                 continue;
             }
             if associated_count > 0 {
-                self.parent_pop.push_back(*candidates[(rand::random::<f64>() * candidates.len() as f64) as usize]);
+                self.parent_pop.push_back(candidates[(rand::random::<f64>() * candidates.len() as f64) as usize].clone());
             } else {
 
             }
