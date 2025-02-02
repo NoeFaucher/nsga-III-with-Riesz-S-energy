@@ -1,12 +1,13 @@
 mod nsga3;
 mod problem;
-
+mod ref_point_generator;
 use std::{cell::RefCell, collections::LinkedList, rc::Rc, vec};
 
 // use nsga3::Nsga3;
 // use nsga3::Nsga3;
 use problem::{dtzl1::DTZL1, dtzl2::DTZL2, dtzl3::DTZL3, dtzl6::DTZL6, dtzl7::DTZL7, Point};
 use nsga3::{Nsga3, non_dominated_sort};
+use ref_point_generator::RefPointGenerator;
 
 
 fn main() {
@@ -97,20 +98,30 @@ fn main() {
     //     println!("------------------------");
     // }
 
-    let problem =Rc::new(RefCell::new(DTZL1::new(9,5))) ;
+    // let problem =Rc::new(RefCell::new(DTZL1::new(9,5))) ;
 
-    let mut nsga3: Nsga3<DTZL1> = Nsga3::new();
-    let mut list: LinkedList<Point<DTZL1>> = LinkedList::new();
-    for i in 0..500 {
-        list.push_back(Point::new(Rc::clone(&problem)));
-    }
-    nsga3.normalise(&mut list);
-    for ele in  list {
-        let mut sum: f64 = 0.;
-        for i in 0..5 {
-            sum += ele.norm_fitness[i];
+    // let mut nsga3: Nsga3<DTZL1> = Nsga3::new();
+    // let mut list: LinkedList<Point<DTZL1>> = LinkedList::new();
+    // for i in 0..500 {
+    //     list.push_back(Point::new(Rc::clone(&problem)));
+    // }
+    // nsga3.normalise(&mut list);
+    // for ele in  list {
+    //     let mut sum: f64 = 0.;
+    //     for i in 0..5 {
+    //         sum += ele.norm_fitness[i];
+    //     }
+    //     println!("{:?}", sum);
+    // }
+
+
+    let res = RefPointGenerator::das_dennis(3, 5);
+    for ele in res {
+        for ele2 in ele {
+            print!("{:?} , ", ele2);
         }
-        println!("{:?}", sum);
+        println!();
     }
+
 
 }
