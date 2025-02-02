@@ -1,5 +1,6 @@
 use std::collections::LinkedList;
 use nalgebra::{DMatrix};
+use rand::random;
 
 use crate::problem::{Point, Problem};
 
@@ -53,11 +54,18 @@ where T: Problem + Clone
                 self.parent_pop.append(&mut fronts[j]);
             }
 
+            let missing = self.parent_pop.len() - self.pop_size;
+
             self.normalise(&mut saturated);
             let mut associated: Vec<usize> = Vec::new();
             let mut distances: Vec<f64> = Vec::new();
             self.associate(&mut associated, &mut distances, &saturated);
-            self.niching();
+
+            let mut associated_last_front: Vec<usize> = Vec::new();
+            let mut distances_last_front: Vec<f64> = Vec::new();
+            self.associate_last_front(&mut associated_last_front, &mut distances_last_front, &fronts[i]);
+
+            self.niching(&associated, &distances, &associated_last_front, &distances_last_front, missing, &fronts[i], &saturated);
         }
     }
 
@@ -172,8 +180,63 @@ where T: Problem + Clone
         }
     }
 
-    fn niching(&self) {
-        todo!()
+    fn associate_last_front(&self, associated_last_front: &mut Vec<usize>, distances_last_front: &mut Vec<f64>, last_front: &LinkedList<Point<T>>) {
+        for (k, ref_point) in self.ref_points.iter().enumerate() {
+            for (i, point) in last_front.iter().enumerate() {
+                let mut scalar = 0.;
+                let mut norm_sq = 0.;
+                for j in 0..ref_point.len() {
+                    scalar += ref_point[j] * point.fitness[j];
+                    norm_sq += ref_point[j] * ref_point[j];
+                }
+                
+                let mut dist_sq = 0.;
+                for j in 0..ref_point.len() {
+                    dist_sq += point.fitness[j] - scalar / norm_sq * ref_point[j] * point.fitness[j] - scalar / norm_sq * ref_point[j];
+                }
+                if associated_last_front.len() < last_front.len() {
+                    associated_last_front.push(k);
+                    distances_last_front.push(dist_sq);
+                } else if dist_sq < distances_last_front[i] {
+                    associated_last_front[i] = k;
+                    distances_last_front[i] = dist_sq;
+                }
+            }
+        }
+    }
+
+    fn niching(&mut self, associated: &Vec<usize>, distances: &Vec<f64>, associated_last_front: &Vec<usize>, distances_last_front: &Vec<f64>, missing: usize, last_front: &LinkedList<Point<T>>, saturated: &LinkedList<Point<T>>) {
+        let mut k = 0;
+        let mut niche_count: Vec<(usize, usize)> = vec![(0, 0); self.ref_points.len()];
+        for i in associated {
+            niche_count[*i] = match niche_count[*i] {
+                | (_, y) => (*i, y+1)
+            };
+        }
+        niche_count.sort_by(|(_, x), (_, y) | y.cmp(x)); // from biggest to smallest
+        while k < missing {
+            let (ref_point_idx, associated_count) = niche_count[niche_count.len()-1];
+            let mut candidates: Vec<&Point<T>> = Vec::new();
+            for (i, point) in last_front.iter().enumerate() {
+                if associated_last_front[i] == ref_point_idx {
+                    candidates.push(point);
+                }
+            }
+            if candidates.len() == 0 {
+                niche_count.pop();
+                continue;
+            }
+            if associated_count > 0 {
+                self.parent_pop.push_back(*candidates[(rand::random::<f64>() * candidates.len() as f64) as usize]);
+            } else {
+
+            }
+            let last_idx = niche_count.len()-1;
+            niche_count[last_idx] = match niche_count[niche_count.len()-1] {
+                | (x, y) => (x, y+1)
+            };
+            k += 1;
+        }
     }
 }
 
@@ -182,7 +245,7 @@ pub fn non_dominated_sort<T>(pop: LinkedList<Point<T>>) -> Vec<LinkedList<Point<
 where T: Problem + Clone
 {
     let mut s: Vec<Vec<Point<T>>>= vec![vec![];pop.len()]; // list of point dominated by the point of the index in the pop
-    let mut s_index: Vec<Vec<usize>>= vec![vec![];pop.len()]; // list of index of pointdominated by the point of the index in the pop
+    let mut s_index: Vec<Vec<usize>>= vec![vec![];pop.len()]; // list of index of point dominated by the point of the index in the pop
     let mut f: Vec<LinkedList<Point<T>>> = vec![];  // list of fronts
     let mut f_index: Vec<LinkedList<usize>> = vec![]; // list of the index of point in the fronts
     
