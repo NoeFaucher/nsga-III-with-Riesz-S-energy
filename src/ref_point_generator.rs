@@ -70,8 +70,8 @@ impl RefPointGenerator
                 min_dist.push(1000000.);
                 for chosen in res.iter() {
                     let mut dist = 0.;
-                    for i in 0..dimension {
-                        dist += (randoms[j][i] - chosen[i]) * (randoms[j][i] - chosen[i]); // how the f am i supposed to iterate through f-ing vectors!!!
+                    for i in 0..dimension as usize {
+                        dist += (randoms[j][i] - chosen[i]) * (randoms[j][i] - chosen[i]);
                     }
                     if dist < min_dist[j] {
                         min_dist[j] = dist;
