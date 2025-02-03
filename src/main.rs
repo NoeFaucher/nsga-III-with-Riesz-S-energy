@@ -70,27 +70,27 @@ fn main() {
     // // let p: Point<DTZL1> = Point::new_from(vec![1.;9], Rc::clone(&problem));
     // // println!("{:?}",p);
 
-    let problem =Rc::new(RefCell::new(DTZL1::new(3,2))) ;
-    let points: LinkedList<Point<DTZL1>> = (0..10).map(|_| Point::new(Rc::clone(&problem))).collect();
+    // let problem =Rc::new(RefCell::new(DTZL1::new(3,2))) ;
+    // let points: LinkedList<Point<DTZL1>> = (0..10).map(|_| Point::new(Rc::clone(&problem))).collect();
 
-    for p in points.iter() {
-        println!("{:?}",p);
-    }
+    // for p in points.iter() {
+    //     println!("{:?}",p);
+    // }
 
-    println!("\n\n");
+    // println!("\n\n");
 
-    let fronts = non_dominated_sort(points);
+    // let fronts = non_dominated_sort(points);
 
-    // println!("{:?}",fronts);
-    let mut a = 0;
-    for i in 0..fronts.len() {
-        a += fronts[i].len();
-        for p in fronts[i].iter(){
-            println!("{i} {:?}",p);
-        }
-    }
+    // // println!("{:?}",fronts);
+    // let mut a = 0;
+    // for i in 0..fronts.len() {
+    //     a += fronts[i].len();
+    //     for p in fronts[i].iter(){
+    //         println!("{i} {:?}",p);
+    //     }
+    // }
 
-    println!("{a}");
+    // println!("{a}");
 
 
     // for p in points {
@@ -115,12 +115,9 @@ fn main() {
     // }
 
 
-    let res = RefPointGenerator::das_dennis(3, 5);
+    let res = RefPointGenerator::random_point(3);
     for ele in res {
-        for ele2 in ele {
-            print!("{:?} , ", ele2);
-        }
-        println!();
+        println!("{:?} , ", ele);
     }
 
 
